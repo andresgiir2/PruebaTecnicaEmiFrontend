@@ -21,12 +21,15 @@ export class TaskApiService {
   private readonly statesSubject = new BehaviorSubject<TaskState[]>([]);
   private readonly loadingSubject = new BehaviorSubject<boolean>(false);
   private readonly errorSubject = new BehaviorSubject<UiError | null>(null);
+  private readonly successSubject = new BehaviorSubject<string | null>(null);
   private readonly tasksLoadedSubject = new BehaviorSubject<boolean>(false);
+  private successTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   readonly tasks$ = this.tasksSubject.asObservable();
   readonly states$ = this.statesSubject.asObservable();
   readonly loading$ = this.loadingSubject.asObservable();
   readonly error$ = this.errorSubject.asObservable();
+  readonly success$ = this.successSubject.asObservable();
   readonly tasksLoaded$ = this.tasksLoadedSubject.asObservable();
 
   private hasLoadedTasks = false;
@@ -85,6 +88,7 @@ export class TaskApiService {
       tap((task) => {
         this.tasksSubject.next([task, ...this.tasksSubject.value]);
         this.errorSubject.next(null);
+        this.showSuccess(`Task ${task.id} creada correctamente.`);
       }),
       catchError((error) => this.failRequest('No fue posible crear la tarea.', error, true)),
       finalize(() => this.loadingSubject.next(false)),
@@ -99,6 +103,7 @@ export class TaskApiService {
           this.tasksSubject.value.map((currentTask) => (currentTask.id === id ? task : currentTask)),
         );
         this.errorSubject.next(null);
+        this.showSuccess(`Task ${task.id} actualizada correctamente.`);
       }),
       catchError((error) => this.failRequest('No fue posible actualizar la tarea.', error, true)),
       finalize(() => this.loadingSubject.next(false)),
@@ -111,6 +116,7 @@ export class TaskApiService {
       tap(() => {
         this.tasksSubject.next(this.tasksSubject.value.filter((task) => task.id !== id));
         this.errorSubject.next(null);
+        this.showSuccess(`Task ${id} eliminada correctamente.`);
       }),
       catchError((error) => this.failRequest('No fue posible eliminar la tarea.', error, true)),
       finalize(() => this.loadingSubject.next(false)),
@@ -125,6 +131,7 @@ export class TaskApiService {
           this.tasksSubject.value.map((currentTask) => (currentTask.id === id ? task : currentTask)),
         );
         this.errorSubject.next(null);
+        this.showSuccess(`Task ${task.id} marcada como completada.`);
       }),
       catchError((error) => this.failRequest('No fue posible marcar la tarea como completada.', error, true)),
       finalize(() => this.loadingSubject.next(false)),
@@ -171,6 +178,14 @@ export class TaskApiService {
     this.errorSubject.next(null);
   }
 
+  clearSuccess(): void {
+    this.successSubject.next(null);
+    if (this.successTimeoutId) {
+      clearTimeout(this.successTimeoutId);
+      this.successTimeoutId = null;
+    }
+  }
+
   getLatestState(task: Task): string {
     return task.stateHistory.at(-1)?.state ?? 'unknown';
   }
@@ -196,6 +211,7 @@ export class TaskApiService {
   private failRequest(message: string, error: unknown, rethrow = false): Observable<never> {
     console.error(message, error);
     this.errorSubject.next(this.mapError(message, error));
+    this.clearSuccess();
 
     if (rethrow) {
       return throwError(() => error);
@@ -266,5 +282,14 @@ export class TaskApiService {
     }
 
     return String(value);
+  }
+
+  private showSuccess(message: string): void {
+    this.clearSuccess();
+    this.successSubject.next(message);
+    this.successTimeoutId = setTimeout(() => {
+      this.successSubject.next(null);
+      this.successTimeoutId = null;
+    }, 4000);
   }
 }

@@ -44,6 +44,13 @@
         </div>
       }
 
+      @if (success$ | async; as success) {
+        <div class="feedback feedback--success">
+          <span>{{ success }}</span>
+          <button type="button" class="btn btn-light" (click)="taskService.clearSuccess()">Dismiss</button>
+        </div>
+      }
+
       <div class="row g-4 align-items-start">
         <div class="col-12 col-lg-4 d-flex">
           <app-task-card

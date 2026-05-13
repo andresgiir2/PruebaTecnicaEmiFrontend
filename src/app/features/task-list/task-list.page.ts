@@ -21,6 +21,7 @@ export default class TaskListPage {
   readonly tasks$ = this.taskService.tasks$;
   readonly loading$ = this.taskService.loading$;
   readonly error$ = this.taskService.error$;
+  readonly success$ = this.taskService.success$;
   readonly currentPage$ = combineLatest([this.tasks$, this.currentPageSubject.asObservable()]).pipe(
     map(([tasks, requestedPage]) => {
       const maxPage = Math.max(1, Math.ceil(tasks.length / this.pageSize));

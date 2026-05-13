@@ -23,6 +23,7 @@ export default class TaskDetailPage {
   readonly task$ = this.taskService.getTaskById(this.taskId);
   readonly states$ = this.taskService.states$;
   readonly error$ = this.taskService.error$;
+  readonly success$ = this.taskService.success$;
   readonly tasksLoaded$ = this.taskService.tasksLoaded$;
   readonly viewModel$ = combineLatest([this.task$, this.states$, this.tasksLoaded$]).pipe(
     map(([task, states, tasksLoaded]) => ({ task, states, tasksLoaded })),
