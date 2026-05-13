@@ -1,0 +1,58 @@
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-shell__header {
+  padding: 1rem 1.5rem;
+  position: sticky;
+  top: 0;
+  backdrop-filter: blur(18px);
+  background: var(--app-shell-bg);
+  border-bottom: 1px solid var(--app-border-color);
+  z-index: 10;
+}
+
+.app-shell__header-inner {
+  position: relative;
+  justify-content: center;
+}
+
+.app-shell__brand {
+  color: #111827;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  position: absolute;
+  left: 0;
+}
+
+.app-shell__content {
+  padding-bottom: 3rem;
+}
+
+.app-shell__link {
+  color: #4b5563;
+  font-weight: 600;
+  border-radius: 999px;
+  padding-inline: 0.9rem;
+}
+
+.app-shell__link:hover {
+  color: #111827;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.app-shell__link--active {
+  color: #111827;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px var(--app-border-color);
+}
+
+@media (max-width: 991px) {
+  .app-shell__header-inner {
+    justify-content: space-between;
+  }
+
+  .app-shell__brand {
+    position: static;
+  }
+}

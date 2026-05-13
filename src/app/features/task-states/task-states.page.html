@@ -1,0 +1,147 @@
+<section class="page-shell">
+  <header class="page-header">
+    <div>
+      <p class="page-kicker">Task bonus</p>
+      <h1 class="page-title">Manage task states</h1>
+      <p class="page-copy">
+        Create, rename and remove states without breaking task history. States marked as completion states close a task automatically.
+      </p>
+    </div>
+
+    <a routerLink="/tasks" class="btn btn-light">Back to tasks</a>
+  </header>
+
+  @if (error$ | async; as error) {
+    <div class="feedback feedback--error">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn-light" (click)="taskService.clearError()">Dismiss</button>
+    </div>
+  }
+
+  <section class="surface">
+    <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start mb-4">
+      <div>
+        <h2 class="h5 mb-1">Create state</h2>
+        <p class="text-muted mb-0">Add a new workflow state available in the task form.</p>
+      </div>
+    </div>
+
+    <form class="row g-3 align-items-end" [formGroup]="createForm" (ngSubmit)="createState()">
+      <div class="col-md-6">
+        <label for="stateName" class="form-label">State name</label>
+        <input id="stateName" type="text" formControlName="name" class="form-control" placeholder="e.g. blocked" />
+        @if (createForm.controls.name.touched && createForm.controls.name.invalid) {
+          <p class="states-page__error mt-2">The state name is required and must be shorter than 40 characters.</p>
+        }
+      </div>
+
+      <div class="col-md-4">
+        <div class="form-check pt-4">
+          <input id="isCompletionState" type="checkbox" formControlName="isCompletionState" class="form-check-input" />
+          <label for="isCompletionState" class="form-check-label">Marks task as completed</label>
+        </div>
+      </div>
+
+      <div class="col-md-2 d-grid">
+        <button type="submit" class="btn btn-primary">Add state</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="surface">
+    <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start mb-4">
+      <div>
+        <h2 class="h5 mb-1">Current states</h2>
+        <p class="text-muted mb-0">Usage count reflects current task history dependencies.</p>
+      </div>
+      @if (loading$ | async) {
+        <span class="badge text-bg-light border">Syncing...</span>
+      }
+    </div>
+
+    @if (states$ | async; as states) {
+      <div class="d-grid gap-3">
+        @for (state of states; track state.name) {
+          <article class="card-subtle p-4">
+            <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+              <div>
+                <div class="d-flex flex-wrap gap-2 align-items-center mb-1">
+                  <h3 class="h6 mb-0">{{ state.name }}</h3>
+                  @if (state.isCompletionState) {
+                    <span class="badge text-bg-success-subtle border border-success-subtle text-success-emphasis">Completion state</span>
+                  }
+                </div>
+                <p class="text-muted mb-0">{{ state.usageCount ?? 0 }} history references · {{ state.activeTaskCount ?? 0 }} active task states</p>
+              </div>
+
+              <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-light" (click)="startRename(state)">Rename</button>
+                <button type="button" class="btn btn-outline-danger" (click)="startDelete(state)">Delete</button>
+              </div>
+            </div>
+
+            @if (editingStateName === state.name) {
+              <form class="row g-3 align-items-end mt-1" [formGroup]="renameForm" (ngSubmit)="saveRename(state)">
+                <div class="col-md-6">
+                  <label [for]="'rename-' + state.name" class="form-label">New state name</label>
+                  <input [id]="'rename-' + state.name" type="text" formControlName="name" class="form-control" />
+                  @if (renameForm.controls.name.touched && renameForm.controls.name.invalid) {
+                    <p class="states-page__error mt-2">The new name is required and must be shorter than 40 characters.</p>
+                  }
+                </div>
+
+                <div class="col-md-3">
+                  <div class="form-check pt-4">
+                    <input [id]="'rename-completion-' + state.name" type="checkbox" formControlName="isCompletionState" class="form-check-input" />
+                    <label [for]="'rename-completion-' + state.name" class="form-check-label">Completion state</label>
+                  </div>
+                </div>
+
+                <div class="col-md-3">
+                  <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light flex-fill" (click)="cancelRename()">Cancel</button>
+                    <button type="submit" class="btn btn-primary flex-fill">Save</button>
+                  </div>
+                </div>
+              </form>
+            }
+
+            @if (deletingStateName === state.name) {
+              <form class="row g-3 align-items-end mt-1" [formGroup]="deleteForm" (ngSubmit)="confirmDelete(state)">
+                @if (canDeleteWithoutReplacement(state)) {
+                  <div class="col-12">
+                    <p class="text-muted mb-0">This state is not referenced in any task history, so it can be removed directly.</p>
+                  </div>
+                } @else {
+                  <div class="col-md-8">
+                    <label [for]="'replacement-' + state.name" class="form-label">Replacement state</label>
+                    <select [id]="'replacement-' + state.name" formControlName="replacementState" class="form-select">
+                      <option value="">Select replacement</option>
+                      @for (replacement of replacementOptions(states, state.name); track replacement.name) {
+                        <option [value]="replacement.name">{{ replacement.name }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <p class="text-muted mb-0">Deleting this state will replace every matching history entry with the selected state.</p>
+                  </div>
+                }
+
+                <div class="col-12 d-flex flex-wrap justify-content-end gap-2">
+                  <button type="button" class="btn btn-light" (click)="cancelDelete()">Cancel</button>
+                  <button
+                    type="submit"
+                    class="btn btn-danger"
+                    [disabled]="!canDeleteWithoutReplacement(state) && !deleteForm.getRawValue().replacementState"
+                  >
+                    Confirm delete
+                  </button>
+                </div>
+              </form>
+            }
+          </article>
+        }
+      </div>
+    }
+  </section>
+</section>

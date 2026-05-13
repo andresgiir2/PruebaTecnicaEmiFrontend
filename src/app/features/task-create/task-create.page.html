@@ -1,0 +1,27 @@
+<section class="page-shell">
+  <header class="page-header">
+    <div>
+      <p class="page-kicker">Task form</p>
+      <h1 class="page-title">Create task</h1>
+      <p class="page-copy">Create a new task with notes and a valid workflow state.</p>
+    </div>
+
+    <a routerLink="/tasks" class="btn btn-light">Back to tasks</a>
+  </header>
+
+  @if (error$ | async; as error) {
+    <div class="feedback feedback--error">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn-light" (click)="taskService.clearError()">Dismiss</button>
+    </div>
+  }
+
+  <section class="surface">
+    <app-task-form
+      [states]="(states$ | async) ?? []"
+      submitLabel="Create task"
+      (formSubmit)="createTask($event)"
+      (cancel)="cancel()"
+    />
+  </section>
+</section>

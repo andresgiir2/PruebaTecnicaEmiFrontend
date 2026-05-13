@@ -1,0 +1,65 @@
+<section class="page-shell">
+  <header class="page-header">
+    <div>
+      <p class="page-kicker">Task management</p>
+      <h1 class="page-title">Execution board</h1>
+      <p class="page-copy">
+        Review the current workload, mark tasks as completed and move into detail when you need to edit.
+      </p>
+    </div>
+
+    <a routerLink="/tasks/new" class="btn btn-primary">Create task</a>
+  </header>
+
+  @if (error$ | async; as error) {
+    <div class="feedback feedback--error">
+      <span>{{ error }}</span>
+      <button type="button" class="btn btn-light" (click)="taskService.clearError()">Dismiss</button>
+    </div>
+  }
+
+  @if (loading$ | async) {
+    <p class="feedback mb-0">Loading tasks...</p>
+  }
+
+  <div class="row g-4">
+    @for (task of paginatedTasks$ | async; track task.id) {
+      <div class="col-12 col-md-6 col-xl-4 d-flex">
+        <app-task-card class="w-100" [task]="task" (deleteTask)="onDelete($event)" (completeTask)="onComplete($event)" />
+      </div>
+    }
+  </div>
+
+  @if (pageNumbers$ | async; as pageNumbers) {
+    @if (currentPage$ | async; as currentPage) {
+      <nav class="d-flex justify-content-center" aria-label="Task list pagination">
+        <ul class="pagination mb-0">
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <button type="button" class="page-link" (click)="goToPreviousPage(currentPage)" [disabled]="currentPage === 1">
+              Previous
+            </button>
+          </li>
+
+          @for (pageNumber of pageNumbers; track trackByPage($index, pageNumber)) {
+            <li class="page-item" [class.active]="currentPage === pageNumber" [attr.aria-current]="currentPage === pageNumber ? 'page' : null">
+              <button type="button" class="page-link" (click)="setPage(pageNumber)">
+                {{ pageNumber }}
+              </button>
+            </li>
+          }
+
+          <li class="page-item" [class.disabled]="currentPage === pageNumbers.length">
+            <button
+              type="button"
+              class="page-link"
+              (click)="goToNextPage(currentPage, pageNumbers.length)"
+              [disabled]="currentPage === pageNumbers.length"
+            >
+              Next
+            </button>
+          </li>
+        </ul>
+      </nav>
+    }
+  }
+</section>

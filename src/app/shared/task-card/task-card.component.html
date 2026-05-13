@@ -1,0 +1,51 @@
+<article class="task-card card-subtle p-4 h-100" [class.task-card--completed]="isCompleted">
+  <header class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+    <div>
+      <p class="task-card__eyebrow">Task {{ task.id }}</p>
+      <h3 class="h5 mb-1">{{ task.title }}</h3>
+    </div>
+
+    <span class="badge rounded-pill badge-soft px-3 py-2">{{ latestState }}</span>
+  </header>
+
+  <p class="task-card__description">{{ task.description }}</p>
+
+  <dl class="row g-3 mb-0">
+    <div class="col-sm-6">
+      <dt class="task-card__eyebrow">Due date</dt>
+      <dd class="mb-0 fw-semibold">{{ task.dueDate | date: 'mediumDate' }}</dd>
+    </div>
+    <div class="col-sm-6">
+      <dt class="task-card__eyebrow">Completed</dt>
+      <dd class="mb-0 fw-semibold">{{ isCompleted ? 'Yes' : 'No' }}</dd>
+    </div>
+  </dl>
+
+  <section class="task-card__notes">
+    <h4 class="task-card__eyebrow mb-2">Notes</h4>
+    <ul class="mb-0 ps-3">
+      @for (note of task.notes; track note) {
+        <li>{{ note }}</li>
+      }
+    </ul>
+  </section>
+
+  @if (showViewAction || showQuickActions) {
+    <footer class="d-flex flex-wrap justify-content-between gap-2 pt-2 mt-auto">
+      @if (showViewAction) {
+        <a [routerLink]="['/tasks', task.id]" class="btn btn-light">View details</a>
+      }
+
+      @if (showQuickActions) {
+        <div class="d-flex flex-wrap gap-2">
+          @if (!isCompleted) {
+            <button type="button" class="btn btn-primary" (click)="completeTask.emit(task.id)">
+              Mark completed
+            </button>
+          }
+          <button type="button" class="btn btn-outline-danger" (click)="deleteTask.emit(task.id)">Delete</button>
+        </div>
+      }
+    </footer>
+  }
+</article>

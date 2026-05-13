@@ -1,0 +1,31 @@
+.task-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.task-card--completed {
+  border-color: #bfdbfe;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+}
+
+.task-card__eyebrow,
+.task-card__notes h4 {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--app-muted);
+}
+
+.task-card__description {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.6;
+}
+
+.task-card__notes ul {
+  color: #4b5563;
+}
+
+.task-card__notes li + li {
+  margin-top: 0.45rem;
+}

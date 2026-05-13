@@ -1,0 +1,69 @@
+<form class="task-form" [formGroup]="form" (ngSubmit)="submit()">
+  <div class="mb-3">
+    <label for="title" class="form-label">Title</label>
+    <input id="title" type="text" formControlName="title" class="form-control" />
+    @if (form.controls.title.touched && form.controls.title.invalid) {
+      <p class="task-form__error mt-2">Title is required and must be shorter than 120 characters.</p>
+    }
+  </div>
+
+  <div class="mb-3">
+    <label for="description" class="form-label">Description</label>
+    <textarea id="description" rows="4" formControlName="description" class="form-control"></textarea>
+    @if (form.controls.description.touched && form.controls.description.invalid) {
+      <p class="task-form__error mt-2">Description is required and must be shorter than 500 characters.</p>
+    }
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label for="dueDate" class="form-label">Due date</label>
+      <input id="dueDate" type="date" formControlName="dueDate" class="form-control" />
+      @if (form.controls.dueDate.touched && form.controls.dueDate.invalid) {
+        <p class="task-form__error mt-2">Due date is required.</p>
+      }
+    </div>
+
+    <div class="col-md-6">
+      <label for="currentState" class="form-label">Current state</label>
+      <select id="currentState" formControlName="currentState" class="form-select">
+        <option value="">Select a state</option>
+        @for (state of states; track state.name) {
+          <option [value]="state.name">{{ state.name }}</option>
+        }
+      </select>
+      @if (form.controls.currentState.touched && form.controls.currentState.invalid) {
+        <p class="task-form__error mt-2">Current state is required.</p>
+      }
+    </div>
+  </div>
+
+  <div class="mt-3" formArrayName="notes">
+    <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-3">
+      <label class="form-label mb-0">Notes</label>
+      <button type="button" class="btn btn-light" (click)="addNote()">Add note</button>
+    </div>
+
+    <div class="d-grid gap-2">
+      @for (note of notes.controls; track trackByIndex($index)) {
+        <div class="row g-2 align-items-start">
+          <div class="col">
+            <input type="text" [formControlName]="$index" [placeholder]="'Note ' + ($index + 1)" class="form-control" />
+          </div>
+          <div class="col-sm-auto">
+            <button type="button" class="btn btn-outline-danger w-100" (click)="removeNote($index)">Remove</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (notes.at(0).touched && notes.at(0).invalid) {
+      <p class="task-form__error mt-2">At least the first note must be completed.</p>
+    }
+  </div>
+
+  <footer class="d-flex flex-wrap justify-content-end gap-2 pt-3">
+    <button type="button" class="btn btn-light" (click)="cancel.emit()">Cancel</button>
+    <button type="submit" class="btn btn-primary">{{ submitLabel }}</button>
+  </footer>
+</form>

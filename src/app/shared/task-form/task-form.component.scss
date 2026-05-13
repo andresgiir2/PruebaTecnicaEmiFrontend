@@ -1,0 +1,14 @@
+.task-form {
+  display: grid;
+  gap: 1rem;
+}
+
+textarea {
+  min-height: 120px;
+}
+
+.task-form__error {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
