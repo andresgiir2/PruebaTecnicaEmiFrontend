@@ -13,7 +13,29 @@
 
   @if (error$ | async; as error) {
     <div class="feedback feedback--error">
-      <span>{{ error }}</span>
+      <div>
+        <strong>{{ error.message }}</strong>
+        @if (error.code || error.status) {
+          <p class="mb-1 mt-2 small opacity-75">
+            @if (error.code) {
+              <span>{{ error.code }}</span>
+            }
+            @if (error.code && error.status) {
+              <span> · </span>
+            }
+            @if (error.status) {
+              <span>HTTP {{ error.status }}</span>
+            }
+          </p>
+        }
+        @if (error.details.length > 0) {
+          <ul class="mb-0 ps-3 small">
+            @for (detail of error.details; track detail) {
+              <li>{{ detail }}</li>
+            }
+          </ul>
+        }
+      </div>
       <button type="button" class="btn btn-light" (click)="taskService.clearError()">Dismiss</button>
     </div>
   }

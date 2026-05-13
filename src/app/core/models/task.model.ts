@@ -37,3 +37,17 @@ export interface CreateTaskStatePayload {
 export interface DeleteTaskStatePayload {
   replacementState?: string;
 }
+
+export interface ApiErrorResponse {
+  status: number;
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+export interface UiError {
+  status?: number;
+  code?: string;
+  message: string;
+  details: string[];
+}

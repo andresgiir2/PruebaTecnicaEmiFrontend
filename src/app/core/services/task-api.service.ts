@@ -1,7 +1,15 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { BehaviorSubject, EMPTY, Observable, catchError, finalize, map, tap, throwError } from 'rxjs';
-import { CreateTaskStatePayload, DeleteTaskStatePayload, Task, TaskPayload, TaskState } from '../models/task.model';
+import {
+  ApiErrorResponse,
+  CreateTaskStatePayload,
+  DeleteTaskStatePayload,
+  Task,
+  TaskPayload,
+  TaskState,
+  UiError,
+} from '../models/task.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -12,7 +20,7 @@ export class TaskApiService {
   private readonly tasksSubject = new BehaviorSubject<Task[]>([]);
   private readonly statesSubject = new BehaviorSubject<TaskState[]>([]);
   private readonly loadingSubject = new BehaviorSubject<boolean>(false);
-  private readonly errorSubject = new BehaviorSubject<string | null>(null);
+  private readonly errorSubject = new BehaviorSubject<UiError | null>(null);
   private readonly tasksLoadedSubject = new BehaviorSubject<boolean>(false);
 
   readonly tasks$ = this.tasksSubject.asObservable();
@@ -187,12 +195,76 @@ export class TaskApiService {
 
   private failRequest(message: string, error: unknown, rethrow = false): Observable<never> {
     console.error(message, error);
-    this.errorSubject.next(message);
+    this.errorSubject.next(this.mapError(message, error));
 
     if (rethrow) {
       return throwError(() => error);
     }
 
     return EMPTY;
+  }
+
+  private mapError(fallbackMessage: string, error: unknown): UiError {
+    if (!(error instanceof HttpErrorResponse)) {
+      return {
+        message: fallbackMessage,
+        details: [],
+      };
+    }
+
+    const apiError = this.isApiErrorResponse(error.error) ? error.error : null;
+    if (!apiError) {
+      return {
+        status: error.status || undefined,
+        message: fallbackMessage,
+        details: [],
+      };
+    }
+
+    return {
+      status: apiError.status,
+      code: apiError.code,
+      message: apiError.message || fallbackMessage,
+      details: this.formatErrorDetails(apiError.details),
+    };
+  }
+
+  private isApiErrorResponse(error: unknown): error is ApiErrorResponse {
+    return Boolean(
+      error &&
+        typeof error === 'object' &&
+        'message' in error &&
+        'code' in error &&
+        'status' in error,
+    );
+  }
+
+  private formatErrorDetails(details: Record<string, unknown> | undefined): string[] {
+    if (!details) {
+      return [];
+    }
+
+    return Object.entries(details).map(([key, value]) => `${this.humanizeKey(key)}: ${this.stringifyDetailValue(value)}`);
+  }
+
+  private humanizeKey(key: string): string {
+    return key
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/[_-]+/g, ' ')
+      .replace(/^./, (character) => character.toUpperCase());
+  }
+
+  private stringifyDetailValue(value: unknown): string {
+    if (Array.isArray(value)) {
+      return value.map((item) => this.stringifyDetailValue(item)).join(', ');
+    }
+
+    if (value && typeof value === 'object') {
+      return Object.entries(value as Record<string, unknown>)
+        .map(([key, nestedValue]) => `${this.humanizeKey(key)}=${this.stringifyDetailValue(nestedValue)}`)
+        .join(', ');
+    }
+
+    return String(value);
   }
 }
